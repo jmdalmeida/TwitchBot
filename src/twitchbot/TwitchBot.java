@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jibble.pircbot.*;
@@ -17,8 +18,11 @@ public class TwitchBot extends PircBot {
     private final WordFilter wordFilter;
 
     private String[] channels;
+    
+    private long connectedTimestamp;
 
     public TwitchBot() {
+        connectedTimestamp = System.nanoTime();
         this.setName(Configuration.getInstance().getValue("BOT_username"));
         this.setVerbose(true);
         try {
@@ -97,6 +101,17 @@ public class TwitchBot extends PircBot {
             public void doFunction(String channel, String sender, String login, String hostname) {
                 String commands = chatFunctions.keySet().toString();
                 sendMessage(channel, "Available commands are: " + commands.substring(1, commands.length() - 1) + ".");
+            }
+
+        });
+        chatFunctions.put("!uptime", new ChatFunction() {
+
+            @Override
+            public void doFunction(String channel, String sender, String login, String hostname) {
+                long elapsedTime = System.nanoTime() - connectedTimestamp;
+                final long hr = TimeUnit.NANOSECONDS.toHours(elapsedTime);
+                final long min = TimeUnit.NANOSECONDS.toMinutes(elapsedTime);
+                sendMessage(channel, "I've been up for "  + String.format("%02d hours, %02d minutes", hr, min) + ".");
             }
 
         });

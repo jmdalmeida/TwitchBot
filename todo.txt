@@ -5,3 +5,11 @@
 - Music manager
     - Request song
     - Current song
+- Poll
+    - open
+    - reset
+    - close
+    - results
+    - vote
+- Spam Protection
+- Topic
