@@ -1,0 +1,12 @@
+- Word Filter
+    - Words file to be filtered
+- Configuration File
+    - Bot Username
+    - Bot oAuth
+    - Channels to join
+- GUI
+    - Chat
+    - Viewer List
+- Stream music
+    - Request song
+    - Current song
