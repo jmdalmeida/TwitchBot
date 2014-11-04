@@ -8,13 +8,15 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jibble.pircbot.*;
+import twitchbot.WordFilter.WordFilter;
 
 public class TwitchBot extends PircBot {
 
     private static final String BOT_USERNAME = "DieselTheBot";
     private static final String OAUTH = "oauth:ljkr0pyzjgxs6pq1qkovgas8hvt44p";
-    
+
     private Map<String, ChatFunction> chatFunctions;
+    private WordFilter wordFiler;
 
     private final String channel;
 
@@ -28,6 +30,7 @@ public class TwitchBot extends PircBot {
             Logger.getLogger(TwitchBot.class.getName()).log(Level.SEVERE, null, ex);
         }
         setupCommands();
+        wordFiler = new WordFilter();
         this.joinChannel("#" + channel);
     }
 
@@ -36,8 +39,12 @@ public class TwitchBot extends PircBot {
         super.onMessage(channel, sender, login, hostname, message);
         String[] msg = message.split(" ");
         String possibleCmd = msg[0];
-        if(chatFunctions.containsKey(possibleCmd)){
+        if (chatFunctions.containsKey(possibleCmd)) {
             chatFunctions.get(possibleCmd).doFunction(channel, sender, login, hostname);
+        }
+        if (!wordFiler.validateWords(msg)) {
+            this.sendMessage(channel, "/timeout " + sender);
+            this.sendMessage(channel, "Pssssst...what's with the language, " + sender + "?!");
         }
     }
 
@@ -62,7 +69,7 @@ public class TwitchBot extends PircBot {
             public void doFunction(String channel, String sender, String login, String hostname) {
                 sendMessage(channel, "Hello " + sender + ", how are you?");
             }
-            
+
         });
         chatFunctions.put("!date", new ChatFunction() {
 
@@ -70,7 +77,7 @@ public class TwitchBot extends PircBot {
             public void doFunction(String channel, String sender, String login, String hostname) {
                 sendMessage(channel, "The current date is " + new SimpleDateFormat("dd/MM/yyyy").format(new Date()) + ".");
             }
-            
+
         });
         chatFunctions.put("!time", new ChatFunction() {
 
@@ -78,16 +85,16 @@ public class TwitchBot extends PircBot {
             public void doFunction(String channel, String sender, String login, String hostname) {
                 sendMessage(channel, "The current time is " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + " GMT.");
             }
-            
+
         });
         chatFunctions.put("!commands", new ChatFunction() {
 
             @Override
             public void doFunction(String channel, String sender, String login, String hostname) {
-               String commands = chatFunctions.keySet().toString();
-               sendMessage(channel, "Available commands are: " + commands.substring(1, commands.length() - 1) + ".");
+                String commands = chatFunctions.keySet().toString();
+                sendMessage(channel, "Available commands are: " + commands.substring(1, commands.length() - 1) + ".");
             }
-            
+
         });
     }
 
