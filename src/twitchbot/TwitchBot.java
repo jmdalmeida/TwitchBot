@@ -9,7 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jibble.pircbot.*;
 
-public class DieselTheBot extends PircBot {
+public class TwitchBot extends PircBot {
 
     private static final String BOT_USERNAME = "DieselTheBot";
     private static final String OAUTH = "oauth:ljkr0pyzjgxs6pq1qkovgas8hvt44p";
@@ -18,14 +18,14 @@ public class DieselTheBot extends PircBot {
 
     private final String channel;
 
-    public DieselTheBot(String channel) {
+    public TwitchBot(String channel) {
         this.channel = channel;
         this.setName(BOT_USERNAME);
         this.setVerbose(true);
         try {
             this.connect("irc.twitch.tv", 6667, OAUTH);
         } catch (IOException | IrcException ex) {
-            Logger.getLogger(DieselTheBot.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(TwitchBot.class.getName()).log(Level.SEVERE, null, ex);
         }
         setupCommands();
         this.joinChannel("#" + channel);
