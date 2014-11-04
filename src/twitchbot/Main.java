@@ -7,7 +7,6 @@ public class Main {
 
     public static void main(String[] args) throws IrcException, IOException {
         TwitchBot bot = new TwitchBot("dieselownsu");
-        //DieselTheBot bot = new DieselTheBot("playhearthstone");
     }
 
 }
