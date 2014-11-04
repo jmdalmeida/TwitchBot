@@ -6,7 +6,7 @@ import org.jibble.pircbot.IrcException;
 public class Main {
 
     public static void main(String[] args) throws IrcException, IOException {
-        TwitchBot bot = new TwitchBot("dieselownsu");
+        TwitchBot bot = new TwitchBot();
     }
 
 }

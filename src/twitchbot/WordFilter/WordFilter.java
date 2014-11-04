@@ -13,20 +13,30 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import twitchbot.Config.Configuration;
 
 public class WordFilter {
-
-    private static final String fileName = "filter_words.txt";
-
-    private final List<String> wordList;
+    private List<String> wordList;
+    private boolean running;
 
     public WordFilter() {
+        running = Configuration.getInstance().getValue("WORDFILTER_status").equalsIgnoreCase("on");
+        if (running) {
+            setup();
+        }
+    }
+
+    private void setup() {
         wordList = new IgnoreCaseArrayList();
         try {
             setupWords();
         } catch (FileNotFoundException ex) {
             Logger.getLogger(WordFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    public boolean isRunning() {
+        return running;
     }
 
     public boolean validateWords(String[] words) {
@@ -39,9 +49,9 @@ public class WordFilter {
     }
 
     private void setupWords() throws FileNotFoundException {
-        URL url = getClass().getResource(fileName);
-        try(Scanner scanner = new Scanner(new File(url.getPath()))){
-            while(scanner.hasNextLine()){
+        URL url = getClass().getResource(Configuration.getInstance().getValue("WORDFILTER_filename"));
+        try (Scanner scanner = new Scanner(new File(url.getPath()))) {
+            while (scanner.hasNextLine()) {
                 wordList.add(scanner.next());
             }
         };

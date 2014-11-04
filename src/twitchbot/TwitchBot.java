@@ -8,30 +8,30 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jibble.pircbot.*;
+import twitchbot.Config.Configuration;
 import twitchbot.WordFilter.WordFilter;
 
 public class TwitchBot extends PircBot {
 
-    private static final String BOT_USERNAME = "DieselTheBot";
-    private static final String OAUTH = "oauth:ljkr0pyzjgxs6pq1qkovgas8hvt44p";
-
     private Map<String, ChatFunction> chatFunctions;
-    private WordFilter wordFiler;
+    private final WordFilter wordFilter;
 
-    private final String channel;
+    private String[] channels;
 
-    public TwitchBot(String channel) {
-        this.channel = channel;
-        this.setName(BOT_USERNAME);
+    public TwitchBot() {
+        this.setName(Configuration.getInstance().getValue("BOT_username"));
         this.setVerbose(true);
         try {
-            this.connect("irc.twitch.tv", 6667, OAUTH);
+            this.connect("irc.twitch.tv", 6667, Configuration.getInstance().getValue("BOT_oauth"));
         } catch (IOException | IrcException ex) {
             Logger.getLogger(TwitchBot.class.getName()).log(Level.SEVERE, null, ex);
         }
         setupCommands();
-        wordFiler = new WordFilter();
-        this.joinChannel("#" + channel);
+        wordFilter = new WordFilter();
+        channels = Configuration.getInstance().getValue("CHANNELS_join").split(",");
+        for (String c : channels) {
+            this.joinChannel("#" + c);
+        }
     }
 
     @Override
@@ -42,21 +42,25 @@ public class TwitchBot extends PircBot {
         if (chatFunctions.containsKey(possibleCmd)) {
             chatFunctions.get(possibleCmd).doFunction(channel, sender, login, hostname);
         }
-        if (!wordFiler.validateWords(msg)) {
-            this.sendMessage(channel, "/timeout " + sender);
-            this.sendMessage(channel, "Pssssst...what's with the language, " + sender + "?!");
+        if (wordFilter.isRunning() && !wordFilter.validateWords(msg)) {
+            this.sendMessage(channel, "/" + Configuration.getInstance().getValue("WORDFILTER_action") + " " + sender);
+            this.sendMessage(channel, Configuration.getInstance().getValue("WORDFILTER_output").replace("$sender$", sender));
         }
     }
 
     @Override
     protected void onConnect() {
-        this.sendMessage("#" + channel, BOT_USERNAME + " is up and running!");
+        if (channels != null) {
+            for (String c : channels) {
+                this.sendMessage("#" + c, Configuration.getInstance().getValue("BOT_username") + " is up and running!");
+            }
+        }
     }
 
     @Override
     protected void onJoin(String channel, String sender, String login, String hostname) {
         super.onJoin(channel, sender, login, hostname);
-        if (!sender.equalsIgnoreCase(BOT_USERNAME)) {
+        if (!sender.equalsIgnoreCase(Configuration.getInstance().getValue("BOT_username"))) {
             chatFunctions.get("!hello").doFunction(channel, sender, login, hostname);
         }
     }

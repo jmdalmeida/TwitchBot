@@ -1,11 +1,4 @@
-- Configuration File
-    - Bot Username
-    - Bot oAuth
-    - Channels to join
-    - WordFilter status
-        - Action on word filtered (ex: Timeout user)
-        - Output on word filtered (ex: "Pssssst...what's with the language, $sender$?!")
-- GUI
+- GUI (Portal WEB?)
     - Chat
     - Viewer List
     - Word Filter
