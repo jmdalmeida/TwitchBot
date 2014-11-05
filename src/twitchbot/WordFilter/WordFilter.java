@@ -19,8 +19,8 @@ public class WordFilter {
     private List<String> wordList;
     private boolean running;
 
-    public WordFilter() {
-        running = Configuration.getInstance().getValue("WORDFILTER_status").equalsIgnoreCase("on");
+    public WordFilter(String status) {
+        running = status.equalsIgnoreCase("on");
         if (running) {
             setup();
         }

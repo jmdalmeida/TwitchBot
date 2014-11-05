@@ -1,7 +1,9 @@
+[BROADCASTER]
+username=DieselOwnsU
 [BOT]
 username=DieselTheBot
 oauth=oauth:ljkr0pyzjgxs6pq1qkovgas8hvt44p
-[CHANNELS]
+[CHANNEL]
 join=dieselownsu
 [WORDFILTER]
 filename=filter_words.txt
