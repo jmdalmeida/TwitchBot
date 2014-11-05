@@ -53,12 +53,19 @@ public class TwitchBot extends PircBot {
     }
 
     @Override
+    protected void onConnect() {
+        if (channels != null) {
+            for (String c : channels) {
+                this.sendMessage("#" + c, Configuration.getInstance().getValue("BOT_username") + " is up and running!");
+            }
+        }
+    }
+
+    @Override
     protected void onJoin(String channel, String sender, String login, String hostname) {
         super.onJoin(channel, sender, login, hostname);
         if (!sender.equalsIgnoreCase(Configuration.getInstance().getValue("BOT_username"))) {
             chatFunctions.get("!hello").doFunction(channel, sender, login, hostname);
-        } else {
-            this.sendMessage(channel, Configuration.getInstance().getValue("BOT_username") + " is up and running!");
         }
     }
 
