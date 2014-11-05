@@ -41,7 +41,7 @@ public class WordFilter {
 
     public boolean validateWords(String[] words) {
         for (String s : words) {
-            if (wordList.contains(s)) {
+            if (wordList.contains(s.toLowerCase())) {
                 return false;
             }
         }
