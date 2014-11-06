@@ -33,7 +33,6 @@ public class TwitchBot extends PircBot {
             Logger.getLogger(TwitchBot.class.getName()).log(Level.SEVERE, null, ex);
         }
         channel = Configuration.getInstance().getValue("CHANNEL_join");
-        System.out.println("Channel " + channel);
         this.joinChannel("#" + channel);
         setupCommands();
         setupViewers();
@@ -42,11 +41,24 @@ public class TwitchBot extends PircBot {
 
     @Override
     protected void onMessage(String channel, String sender, String login, String hostname, String message) {
-        super.onMessage(channel, sender, login, hostname, message);
         String[] msg = message.split(" ");
         String possibleCmd = msg[0];
         if (chatFunctions.containsKey(possibleCmd)) {
-            chatFunctions.get(possibleCmd).doFunction(channel, sender, login, hostname);
+            ChatFunction func = chatFunctions.get(possibleCmd);
+            if (func.getPermission() != Permission.NORMAL) {
+                Viewer u = viewers.get(sender);
+                if (u != null) {
+                    if (func.getPermission().getValue() <= u.getPermissionLevel().getValue()) {
+                        func.doFunction(channel, sender, login, hostname);
+                    } else {
+                        this.sendMessage(channel, "You don't have permission to run this command, " + sender + ".");
+                    }
+                } else {
+                    System.err.println("Error processing " + sender + "'s command (" + possibleCmd + "): Viewer not found.");
+                }
+            } else {
+                func.doFunction(channel, sender, login, hostname);
+            }
         }
         if (wordFilter.isRunning() && !wordFilter.validateWords(msg)) {
             this.sendMessage(channel, "/" + Configuration.getInstance().getValue("WORDFILTER_action") + " " + sender);
@@ -56,7 +68,7 @@ public class TwitchBot extends PircBot {
 
     @Override
     protected void onJoin(String channel, String sender, String login, String hostname) {
-        super.onJoin(channel, sender, login, hostname);
+        addNewViewer(sender);
         if (!sender.equalsIgnoreCase(Configuration.getInstance().getValue("BOT_username"))) {
             chatFunctions.get("!hello").doFunction(channel, sender, login, hostname);
         } else {
@@ -65,13 +77,34 @@ public class TwitchBot extends PircBot {
     }
 
     @Override
-    protected void onUserList(String channel, User[] users) {
-        super.onUserList(channel, users);
-        viewers.clear();
-        for (User u : users) {
-            addNewViewer(u);
+    protected void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
+        if (sourceNick.equalsIgnoreCase(this.getName())) {
+            this.sendMessage(channel, "I'm out, cya!");
         }
-        System.out.println("User List updated!");
+        removeViewer(sourceNick);
+    }
+
+    @Override
+    protected void onUserMode(String targetNick, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
+        //#Channel +o user
+        String[] params = mode.split(" ");
+        String chn = params[0];
+        String operation = params[1];
+        String username = params[2];
+        if (chn.equalsIgnoreCase("#" + channel) && viewers.containsKey(username)) {
+            if (!username.equalsIgnoreCase(Configuration.getInstance().getValue("BROADCASTER_username"))) {
+                switch (operation) {
+                    case "+o":
+                        viewers.get(username).setPermissionLevel(Permission.MODERATOR);
+                        break;
+                    case "-o":
+                        viewers.get(username).setPermissionLevel(Permission.NORMAL);
+                        break;
+                }
+            } else {
+                viewers.get(username).setPermissionLevel(Permission.BROADCASTER);
+            }
+        }
     }
 
     private void setupCommands() {
@@ -120,6 +153,18 @@ public class TwitchBot extends PircBot {
             }
 
         });
+        chatFunctions.put("!debug", new ChatFunction(Permission.BROADCASTER) {
+
+            @Override
+            public void doFunction(String channel, String sender, String login, String hostname) {
+                Object[] vs = viewers.values().toArray();
+                for (Object o : vs) {
+                    Viewer v = (Viewer) o;
+                    System.out.println("Viewer: " + v.toString());
+                }
+            }
+
+        });
     }
 
     private void setupViewers() {
@@ -130,15 +175,17 @@ public class TwitchBot extends PircBot {
         wordFilter = new WordFilter(Configuration.getInstance().getValue("WORDFILTER_status"));
     }
 
-    private void addNewViewer(User user) {
-        Permission p = null;
-        if (user.getNick().equalsIgnoreCase(Configuration.getInstance().getValue("BROADCASTER_username"))) {
-            p = Permission.BROADCASTER;
-        } else {
-            p = user.isOp() ? Permission.MOD : Permission.NORMAL;
-        }
-        Viewer v = new Viewer(user.getNick(), p, System.nanoTime());
-        viewers.put(user.getNick(), v);
+    private void addNewViewer(String username) {
+        Permission p = Permission.NORMAL;
+        String nick = username.toLowerCase();
+        Viewer v = new Viewer(nick, p, System.nanoTime());
+        viewers.put(nick, v);
+        System.out.println("Adding " + nick + "(" + p.toString() + ") to Users List.");
+    }
+
+    private void removeViewer(String sourceNick) {
+        viewers.remove(sourceNick);
+        System.out.println("Removing " + sourceNick + " from Users List.");
     }
 
 }
