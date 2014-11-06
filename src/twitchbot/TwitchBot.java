@@ -72,15 +72,12 @@ public class TwitchBot extends PircBot {
         if (!sender.equalsIgnoreCase(Configuration.getInstance().getValue("BOT_username"))) {
             chatFunctions.get("!hello").doFunction(channel, sender, login, hostname);
         } else {
-            this.sendMessage(channel, Configuration.getInstance().getValue("BOT_username") + " is up and running!");
+            this.sendMessage(channel, "Up and running!");
         }
     }
 
     @Override
     protected void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
-        if (sourceNick.equalsIgnoreCase(this.getName())) {
-            this.sendMessage(channel, "I'm out, cya!");
-        }
         removeViewer(sourceNick);
     }
 
@@ -157,11 +154,21 @@ public class TwitchBot extends PircBot {
 
             @Override
             public void doFunction(String channel, String sender, String login, String hostname) {
+                System.out.println("*** Listing viewers ***");
                 Object[] vs = viewers.values().toArray();
                 for (Object o : vs) {
                     Viewer v = (Viewer) o;
-                    System.out.println("Viewer: " + v.toString());
+                    System.out.println("* " + v.toString());
                 }
+                System.out.println("***********************");
+            }
+
+        });
+        chatFunctions.put("!quit", new ChatFunction(Permission.BROADCASTER) {
+
+            @Override
+            public void doFunction(String channel, String sender, String login, String hostname) {
+                quitAndExit();
             }
 
         });
@@ -180,12 +187,18 @@ public class TwitchBot extends PircBot {
         String nick = username.toLowerCase();
         Viewer v = new Viewer(nick, p, System.nanoTime());
         viewers.put(nick, v);
-        System.out.println("Adding " + nick + "(" + p.toString() + ") to Users List.");
+        System.out.println("Users list: Adding " + nick + "(" + p.toString() + ")");
     }
 
     private void removeViewer(String sourceNick) {
         viewers.remove(sourceNick);
-        System.out.println("Removing " + sourceNick + " from Users List.");
+        System.out.println("Users list: Removing " + sourceNick + "");
+    }
+
+    private void quitAndExit() {
+        this.sendMessage("#" + channel, "I'm out, cya!");
+        this.partChannel(channel);
+        this.quitServer();
     }
 
 }

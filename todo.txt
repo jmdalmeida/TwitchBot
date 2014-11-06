@@ -1,4 +1,3 @@
-- Command Permission
 - GUI (Portal WEB?)
     - Chat
     - Viewer List
@@ -14,3 +13,4 @@
     - vote
 - Spam Protection
 - Topic
+- Save config on quit
