@@ -10,12 +10,13 @@ import twitchbot.Commands.ChatCommands;
 import twitchbot.Config.Configuration;
 import twitchbot.Viewers.Permission;
 import twitchbot.Viewers.Viewer;
-import twitchbot.WordFilter.WordFilter;
+import twitchbot.Modules.WordFilter.WordFilter;
+import twitchbot.Viewers.Viewers;
 
 public class TwitchBot extends PircBot {
 
+    public final Viewers viewers;
     private final ChatCommands commands;
-    private final Map<String, Viewer> viewers;
     private WordFilter wordFilter;
 
     private final String channel;
@@ -33,7 +34,7 @@ public class TwitchBot extends PircBot {
         channel = Configuration.getInstance().getValue("CHANNEL_name");
         this.joinChannel("#" + channel);
         commands = new ChatCommands(this);
-        viewers = new HashMap<>();
+        viewers = new Viewers();
         setupWordFilter();
     }
 
@@ -49,7 +50,7 @@ public class TwitchBot extends PircBot {
 
     @Override
     protected void onJoin(String channel, String sender, String login, String hostname) {
-        addNewViewer(sender);
+        viewers.addNewViewer(sender);
         if (!sender.equalsIgnoreCase(Configuration.getInstance().getValue("BOT_username"))) {
             sendMessage(channel, "Hello " + sender + ", how are you?");
         } else {
@@ -59,7 +60,7 @@ public class TwitchBot extends PircBot {
 
     @Override
     protected void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
-        removeViewer(sourceNick);
+        viewers.removeViewer(sourceNick);
     }
 
     @Override
@@ -69,18 +70,18 @@ public class TwitchBot extends PircBot {
         String chn = params[0];
         String operation = params[1];
         String username = params[2];
-        if (chn.equalsIgnoreCase("#" + channel) && viewers.containsKey(username)) {
+        if (chn.equalsIgnoreCase("#" + channel) && viewers.exists(username)) {
             if (!username.equalsIgnoreCase(Configuration.getInstance().getValue("BROADCASTER_username"))) {
                 switch (operation) {
                     case "+o":
-                        viewers.get(username).setPermissionLevel(Permission.MODERATOR);
+                        viewers.set(username, Permission.MODERATOR);
                         break;
                     case "-o":
-                        viewers.get(username).setPermissionLevel(Permission.NORMAL);
+                        viewers.set(username, Permission.NORMAL);
                         break;
                 }
             } else {
-                viewers.get(username).setPermissionLevel(Permission.BROADCASTER);
+                viewers.set(username, Permission.BROADCASTER);
             }
         }
     }
@@ -89,33 +90,16 @@ public class TwitchBot extends PircBot {
         wordFilter = new WordFilter(Configuration.getInstance().getValue("WORDFILTER_status"));
     }
 
-    public void addNewViewer(String username) {
-        Permission p = Permission.NORMAL;
-        String nick = username.toLowerCase();
-        Viewer v = new Viewer(nick, p, System.nanoTime());
-        viewers.put(nick, v);
-        System.out.println("Users list: Adding " + nick + "(" + p.toString() + ")");
-    }
-
-    public void removeViewer(String sourceNick) {
-        viewers.remove(sourceNick);
-        System.out.println("Users list: Removing " + sourceNick + "");
-    }
-
     public void quitAndExit() {
         this.sendMessage("#" + channel, "I'm out, cya!");
         this.partChannel(channel);
         this.quitServer();
         try {
-            Thread.sleep(1000); //give it time to send message
+            Thread.sleep(1000); //give it time to send the message
         } catch (InterruptedException ex) {
             Logger.getLogger(TwitchBot.class.getName()).log(Level.SEVERE, null, ex);
         }
         this.dispose();
-    }
-
-    public Map<String, Viewer> getViewers() {
-        return viewers;
     }
 
     public long getConnectedTimestamp() {

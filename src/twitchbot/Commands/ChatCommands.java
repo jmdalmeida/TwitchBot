@@ -69,13 +69,7 @@ public class ChatCommands {
 
             @Override
             public void doFunction(String channel, String sender, String login, String hostname) {
-                System.out.println("*** Listing viewers ***");
-                Object[] vs = bot.getViewers().values().toArray();
-                for (Object o : vs) {
-                    Viewer v = (Viewer) o;
-                    System.out.println("* " + v.toString());
-                }
-                System.out.println("***********************");
+                bot.viewers.listViewers();
             }
 
         });
@@ -95,7 +89,7 @@ public class ChatCommands {
         if (commands.containsKey(cmd)) {
             ChatFunction func = commands.get(cmd);
             if (func.getPermission() != Permission.NORMAL) {
-                Viewer u = bot.getViewers().get(sender);
+                Viewer u = bot.viewers.getViewer(sender);
                 if (u != null) {
                     if (func.getPermission().getValue() <= u.getPermissionLevel().getValue()) {
                         func.doFunction(channel, sender, login, hostname);
