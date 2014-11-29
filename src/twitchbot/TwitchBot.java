@@ -1,14 +1,12 @@
 package twitchbot;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jibble.pircbot.*;
+import twitchbot.Commands.ChatCommands;
 import twitchbot.Config.Configuration;
 import twitchbot.Viewers.Permission;
 import twitchbot.Viewers.Viewer;
@@ -16,8 +14,8 @@ import twitchbot.WordFilter.WordFilter;
 
 public class TwitchBot extends PircBot {
 
-    private Map<String, ChatFunction> chatFunctions;
-    private Map<String, Viewer> viewers;
+    private final ChatCommands commands;
+    private final Map<String, Viewer> viewers;
     private WordFilter wordFilter;
 
     private final String channel;
@@ -32,34 +30,17 @@ public class TwitchBot extends PircBot {
         } catch (IOException | IrcException ex) {
             Logger.getLogger(TwitchBot.class.getName()).log(Level.SEVERE, null, ex);
         }
-        channel = Configuration.getInstance().getValue("CHANNEL_join");
+        channel = Configuration.getInstance().getValue("CHANNEL_name");
         this.joinChannel("#" + channel);
-        setupCommands();
-        setupViewers();
+        commands = new ChatCommands(this);
+        viewers = new HashMap<>();
         setupWordFilter();
     }
 
     @Override
     protected void onMessage(String channel, String sender, String login, String hostname, String message) {
+        commands.runCommand(channel, sender, login, hostname, message);
         String[] msg = message.split(" ");
-        String possibleCmd = msg[0];
-        if (chatFunctions.containsKey(possibleCmd)) {
-            ChatFunction func = chatFunctions.get(possibleCmd);
-            if (func.getPermission() != Permission.NORMAL) {
-                Viewer u = viewers.get(sender);
-                if (u != null) {
-                    if (func.getPermission().getValue() <= u.getPermissionLevel().getValue()) {
-                        func.doFunction(channel, sender, login, hostname);
-                    } else {
-                        this.sendMessage(channel, "You don't have permission to run this command, " + sender + ".");
-                    }
-                } else {
-                    System.err.println("Error processing " + sender + "'s command (" + possibleCmd + "): Viewer not found.");
-                }
-            } else {
-                func.doFunction(channel, sender, login, hostname);
-            }
-        }
         if (wordFilter.isRunning() && !wordFilter.validateWords(msg)) {
             this.sendMessage(channel, "/" + Configuration.getInstance().getValue("WORDFILTER_action") + " " + sender);
             this.sendMessage(channel, Configuration.getInstance().getValue("WORDFILTER_output").replace("$sender$", sender));
@@ -70,7 +51,7 @@ public class TwitchBot extends PircBot {
     protected void onJoin(String channel, String sender, String login, String hostname) {
         addNewViewer(sender);
         if (!sender.equalsIgnoreCase(Configuration.getInstance().getValue("BOT_username"))) {
-            chatFunctions.get("!hello").doFunction(channel, sender, login, hostname);
+            sendMessage(channel, "Hello " + sender + ", how are you?");
         } else {
             this.sendMessage(channel, "Up and running!");
         }
@@ -104,85 +85,11 @@ public class TwitchBot extends PircBot {
         }
     }
 
-    private void setupCommands() {
-        chatFunctions = new HashMap<>();
-        chatFunctions.put("!hello", new ChatFunction(Permission.NORMAL) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname) {
-                sendMessage(channel, "Hello " + sender + ", how are you?");
-            }
-
-        });
-        chatFunctions.put("!date", new ChatFunction(Permission.NORMAL) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname) {
-                sendMessage(channel, "The current date is " + new SimpleDateFormat("dd/MM/yyyy").format(new Date()) + ".");
-            }
-
-        });
-        chatFunctions.put("!time", new ChatFunction(Permission.NORMAL) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname) {
-                sendMessage(channel, "The current time is " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + " GMT.");
-            }
-
-        });
-        chatFunctions.put("!commands", new ChatFunction(Permission.NORMAL) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname) {
-                String commands = chatFunctions.keySet().toString();
-                sendMessage(channel, "Available commands are: " + commands.substring(1, commands.length() - 1) + ".");
-            }
-
-        });
-        chatFunctions.put("!uptime", new ChatFunction(Permission.NORMAL) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname) {
-                long elapsedTime = System.nanoTime() - connectedTimestamp;
-                final long hr = TimeUnit.NANOSECONDS.toHours(elapsedTime);
-                final long min = TimeUnit.NANOSECONDS.toMinutes(elapsedTime);
-                sendMessage(channel, "I've been up for " + String.format("%02d hours, %02d minutes", hr, min) + ".");
-            }
-
-        });
-        chatFunctions.put("!debug", new ChatFunction(Permission.BROADCASTER) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname) {
-                System.out.println("*** Listing viewers ***");
-                Object[] vs = viewers.values().toArray();
-                for (Object o : vs) {
-                    Viewer v = (Viewer) o;
-                    System.out.println("* " + v.toString());
-                }
-                System.out.println("***********************");
-            }
-
-        });
-        chatFunctions.put("!quit", new ChatFunction(Permission.BROADCASTER) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname) {
-                quitAndExit();
-            }
-
-        });
-    }
-
-    private void setupViewers() {
-        viewers = new HashMap<>();
-    }
-
     private void setupWordFilter() {
         wordFilter = new WordFilter(Configuration.getInstance().getValue("WORDFILTER_status"));
     }
 
-    private void addNewViewer(String username) {
+    public void addNewViewer(String username) {
         Permission p = Permission.NORMAL;
         String nick = username.toLowerCase();
         Viewer v = new Viewer(nick, p, System.nanoTime());
@@ -190,15 +97,29 @@ public class TwitchBot extends PircBot {
         System.out.println("Users list: Adding " + nick + "(" + p.toString() + ")");
     }
 
-    private void removeViewer(String sourceNick) {
+    public void removeViewer(String sourceNick) {
         viewers.remove(sourceNick);
         System.out.println("Users list: Removing " + sourceNick + "");
     }
 
-    private void quitAndExit() {
+    public void quitAndExit() {
         this.sendMessage("#" + channel, "I'm out, cya!");
         this.partChannel(channel);
         this.quitServer();
+        try {
+            Thread.sleep(1000); //give it time to send message
+        } catch (InterruptedException ex) {
+            Logger.getLogger(TwitchBot.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        this.dispose();
+    }
+
+    public Map<String, Viewer> getViewers() {
+        return viewers;
+    }
+
+    public long getConnectedTimestamp() {
+        return connectedTimestamp;
     }
 
 }

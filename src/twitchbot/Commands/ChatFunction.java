@@ -1,4 +1,4 @@
-package twitchbot;
+package twitchbot.Commands;
 
 import twitchbot.Viewers.Permission;
 
