@@ -12,6 +12,5 @@
     - results
     - vote
 - Spam Protection
-- Topic
 - Save config on quit
 - Countdown timer

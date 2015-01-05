@@ -109,25 +109,21 @@ public class ChatCommands {
         String[] tokens = message.split(" ");
         String cmd = tokens[0];
         if (commands.containsKey(cmd)) {
-            new Thread(new Runnable() {
-
-                @Override
-                public void run() {
-                    ChatFunction func = commands.get(cmd);
-                    if (func.getPermission() != Permission.NORMAL) {
-                        Viewer u = bot.viewers.getViewer(sender);
-                        if (u != null) {
-                            if (func.getPermission().getValue() <= u.getPermissionLevel().getValue()) {
-                                func.doFunction(channel, sender, login, hostname, message);
-                            } else {
-                                bot.sendMessage(channel, "You don't have permission to run this command, " + sender + ".");
-                            }
+            new Thread(() -> {
+                ChatFunction func = commands.get(cmd);
+                if (func.getPermission() != Permission.NORMAL) {
+                    Viewer u = bot.viewers.getViewer(sender);
+                    if (u != null) {
+                        if (func.getPermission().getValue() <= u.getPermissionLevel().getValue()) {
+                            func.doFunction(channel, sender, login, hostname, message);
                         } else {
-                            System.err.println("Error processing " + sender + "'s command (" + cmd + "): Viewer not listed.");
+                            bot.sendMessage(channel, "You don't have permission to run this command, " + sender + ".");
                         }
                     } else {
-                        func.doFunction(channel, sender, login, hostname, message);
+                        System.err.println("Error processing " + sender + "'s command (" + cmd + "): Viewer not listed.");
                     }
+                } else {
+                    func.doFunction(channel, sender, login, hostname, message);
                 }
             }).start();
         }
