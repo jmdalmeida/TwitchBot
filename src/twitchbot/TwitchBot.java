@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import org.jibble.pircbot.*;
 import twitchbot.Commands.ChatCommands;
 import twitchbot.Config.Configuration;
+import twitchbot.Modules.Topic.Topic;
 import twitchbot.Viewers.Permission;
 import twitchbot.Viewers.Viewer;
 import twitchbot.Modules.WordFilter.WordFilter;
@@ -17,7 +18,10 @@ public class TwitchBot extends PircBot {
 
     public final Viewers viewers;
     private final ChatCommands commands;
+    
+    //Modules
     private WordFilter wordFilter;
+    public Topic topic;
 
     private final String channel;
     private long connectedTimestamp;
@@ -35,7 +39,7 @@ public class TwitchBot extends PircBot {
         this.joinChannel("#" + channel);
         commands = new ChatCommands(this);
         viewers = new Viewers();
-        setupWordFilter();
+        setupModules();
     }
 
     @Override
@@ -86,8 +90,9 @@ public class TwitchBot extends PircBot {
         }
     }
 
-    private void setupWordFilter() {
+    private void setupModules() {
         wordFilter = new WordFilter(Configuration.getInstance().getValue("WORDFILTER_status"));
+        topic = new Topic();
     }
 
     public void quitAndExit() {

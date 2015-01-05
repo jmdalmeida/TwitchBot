@@ -3,7 +3,7 @@ package twitchbot.Commands;
 import twitchbot.Viewers.Permission;
 
 interface DoFunction {
-    void doFunction(String channel, String sender, String login, String hostname);
+    void doFunction(String channel, String sender, String login, String hostname, String message);
 }
 
 public abstract class ChatFunction implements DoFunction {
