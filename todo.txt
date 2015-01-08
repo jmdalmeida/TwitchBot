@@ -1,16 +1,2 @@
-- GUI (Portal WEB?)
-    - Chat
-    - Viewer List
-    - Word Filter
-- Music manager
-    - Request song
-    - Current song
-- Poll
-    - open
-    - reset
-    - close
-    - results
-    - vote
-- Spam Protection
-- Save config on quit
-- Countdown timer
+- Make custom commands only run when the message was only the command itself
+- Fix Permit List

@@ -1,132 +1,116 @@
 package twitchbot.Commands;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.Scanner;
+import twitchbot.Config.Configuration;
+import twitchbot.Modules.BotModule;
+import twitchbot.Modules.PriorityLevel;
 import twitchbot.TwitchBot;
 import twitchbot.Viewers.Permission;
 import twitchbot.Viewers.Viewer;
+import twitchbot.Viewers.Viewers;
 
-public class ChatCommands {
+public class ChatCommands extends BotModule {
 
     private final TwitchBot bot;
     private Map<String, ChatFunction> commands;
 
     public ChatCommands(TwitchBot bot) {
+        super(bot, PriorityLevel.NORMAL);
         this.bot = bot;
-        setupCommands();
     }
 
-    private void setupCommands() {
+    public void setupCommands(Object[] modules) {
         commands = new HashMap<>();
-        commands.put("!hello", new ChatFunction(Permission.NORMAL) {
+        for (Object o : modules) {
+            BotModule bm = (BotModule) o;
+            commands.putAll(bm.getModuleCommands());
+        }
+        try {
+            setupCustomCommands();
+        } catch (FileNotFoundException ex) {
+            System.err.println("Error setting up custom commands: " + ex.getMessage());
+        }
+    }
 
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname, String message) {
-                bot.sendMessage(channel, "Hello " + sender + ", how are you?");
+    private void setupCustomCommands() throws FileNotFoundException {
+        URL url = getClass().getResource(Configuration.getInstance().getValue("CHATCOMMANDS_filename"));
+        try (Scanner scanner = new Scanner(new File(url.getPath()))) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                String[] ss = line.split("#");
+                List<String> cmds = new ArrayList<>();
+                cmds.addAll(Arrays.asList(ss[0].split("&")));
+                boolean enabled = "true".equalsIgnoreCase(ss[1]);
+                String msg = ss[2];
+                cmds.stream().forEach((c) -> {
+                    commands.putIfAbsent(c, new ChatFunction(Permission.NORMAL, enabled) {
+
+                        @Override
+                        public void function(String channel, String sender, String login, String hostname, String message) {
+                            bot.sendMessage(channel, msg);
+                        }
+                    });
+                });
             }
+        };
+    }
 
-        });
-        commands.put("!date", new ChatFunction(Permission.NORMAL) {
+    @Override
+    public void onMessage(String channel, String sender, String login, String hostname, String message) {
+        String[] tokens = message.split(" ");
+        if (tokens.length == 0) {
+            return;
+        }
+        String cmd = tokens[0];
+        if (commands.containsKey(cmd)) {
+            new Thread(new Runnable() {
+
+                @Override
+                public void run() {
+                    ChatFunction func = commands.get(cmd);
+                    if (func.getPermission() != Permission.NORMAL) {
+                        Viewer u = ((Viewers) bot.getModule("Viewers")).getViewer(sender);
+                        if (u != null) {
+                            if (func.getPermission().getValue() <= u.getPermissionLevel().getValue()) {
+                                func.doFunction(channel, sender, login, hostname, message);
+                            } else {
+                                bot.sendMessage(channel, "You don't have permission to run this command, " + sender + ".");
+                            }
+                        } else {
+                            System.err.println("Error processing " + sender + "'s command (" + cmd + "): Viewer not listed.");
+                        }
+                    } else {
+                        func.doFunction(channel, sender, login, hostname, message);
+                    }
+                }
+            }).start();
+        }
+    }
+
+    @Override
+    public Map<String, ChatFunction> getModuleCommands() {
+        Map<String, ChatFunction> cmds = new HashMap<>();
+        cmds.put("!commands", new ChatFunction(Permission.NORMAL, true) {
 
             @Override
-            public void doFunction(String channel, String sender, String login, String hostname, String message) {
-                bot.sendMessage(channel, "The current date is " + new SimpleDateFormat("dd/MM/yyyy").format(new Date()) + ".");
-            }
-
-        });
-        commands.put("!time", new ChatFunction(Permission.NORMAL) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname, String message) {
-                bot.sendMessage(channel, "The current time is " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + " GMT.");
-            }
-
-        });
-        commands.put("!commands", new ChatFunction(Permission.NORMAL) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname, String message) {
+            public void function(String channel, String sender, String login, String hostname, String message) {
                 String cmd = commands.keySet().toString();
                 bot.sendMessage(channel, "Available commands are: " + cmd.substring(1, cmd.length() - 1) + ".");
             }
 
         });
-        commands.put("!uptime", new ChatFunction(Permission.NORMAL) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname, String message) {
-                long elapsedTime = System.nanoTime() - bot.getConnectedTimestamp();
-                final long hr = TimeUnit.NANOSECONDS.toHours(elapsedTime);
-                final long min = TimeUnit.NANOSECONDS.toMinutes(elapsedTime);
-                bot.sendMessage(channel, "I've been up for " + String.format("%02d hours, %02d minutes", hr, min) + ".");
-            }
-
-        });
-        commands.put("!debug", new ChatFunction(Permission.BROADCASTER) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname, String message) {
-                bot.viewers.listViewers();
-            }
-
-        });
-        commands.put("!quit", new ChatFunction(Permission.BROADCASTER) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname, String message) {
-                bot.quitAndExit();
-            }
-
-        });
-        commands.put("!topic", new ChatFunction(Permission.NORMAL) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname, String message) {
-                if (bot.topic.isTopicSet()) {
-                    bot.sendMessage(channel, "Topic: " + bot.topic.getTopic());
-                }
-            }
-
-        });
-        commands.put("!settopic", new ChatFunction(Permission.BROADCASTER) {
-
-            @Override
-            public void doFunction(String channel, String sender, String login, String hostname, String message) {
-                if (message.trim().length() > 10) {
-                    bot.topic.setTopic(message.substring(10));
-                } else {
-                    bot.topic.deleteTopic();
-                }
-            }
-            
-        });
-    }
-
-    public void runCommand(String channel, String sender, String login, String hostname, String message) {
-        String[] tokens = message.split(" ");
-        String cmd = tokens[0];
-        if (commands.containsKey(cmd)) {
-            new Thread(() -> {
-                ChatFunction func = commands.get(cmd);
-                if (func.getPermission() != Permission.NORMAL) {
-                    Viewer u = bot.viewers.getViewer(sender);
-                    if (u != null) {
-                        if (func.getPermission().getValue() <= u.getPermissionLevel().getValue()) {
-                            func.doFunction(channel, sender, login, hostname, message);
-                        } else {
-                            bot.sendMessage(channel, "You don't have permission to run this command, " + sender + ".");
-                        }
-                    } else {
-                        System.err.println("Error processing " + sender + "'s command (" + cmd + "): Viewer not listed.");
-                    }
-                } else {
-                    func.doFunction(channel, sender, login, hostname, message);
-                }
-            }).start();
-        }
+        return cmds;
     }
 
 }

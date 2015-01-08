@@ -1,0 +1,31 @@
+- GUI (Portal WEB?)
+    - Chat
+    - Viewer List
+    - Text Filter
+- Save config on quit
+- Custom commands
+    - New command
+    - Delete command
+    - Set command status
+- Modules:
+    - Text Filter
+        - Permit List
+        - Spam Protection
+    - Poll
+        - open
+        - reset
+        - close
+        - results
+        - vote
+    - Music manager
+        - Request song
+        - Current song
+    - Q&A
+        - question
+        - nextquestion
+        - deletequestion
+    - News
+        - Breaking News
+    - Weather
+    - Random Facts
+    - Countdown timer

@@ -2,12 +2,18 @@ package twitchbot.Viewers;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.jibble.pircbot.User;
+import twitchbot.Config.Configuration;
+import twitchbot.Modules.BotModule;
+import twitchbot.Modules.PriorityLevel;
+import twitchbot.TwitchBot;
 
-public class Viewers {
+public class Viewers extends BotModule {
 
     private final Map<String, Viewer> viewers;
 
-    public Viewers() {
+    public Viewers(TwitchBot bot) {
+        super(bot, PriorityLevel.NORMAL);
         viewers = new HashMap<>();
     }
 
@@ -24,6 +30,7 @@ public class Viewers {
     }
 
     public void addNewViewer(String username) {
+        if(viewers.containsKey(username)) return;
         Permission p = Permission.NORMAL;
         String nick = username.toLowerCase();
         Viewer v = new Viewer(nick, p, System.nanoTime());
@@ -41,13 +48,53 @@ public class Viewers {
     }
 
     public void listViewers() {
-        System.out.println("*** Listing viewers ***");
+        System.out.println("**** Listing viewers ****");
         Object[] vs = getViewers();
         for (Object o : vs) {
             Viewer v = (Viewer) o;
             System.out.println("* " + v.toString());
         }
-        System.out.println("***********************");
+        System.out.println("*************************");
     }
 
+    @Override
+    public void onJoin(String channel, String sender, String login, String hostname) {
+        addNewViewer(sender);
+    }
+
+    @Override
+    public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
+        removeViewer(sourceNick);
+    }
+
+    @Override
+    public void onUserMode(String targetNick, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
+        //#Channel +o user
+        String[] params = mode.split(" ");
+        String chn = params[0];
+        String operation = params[1];
+        String username = params[2];
+        if (chn.equalsIgnoreCase("#" + bot.getChannel()) && viewers.containsKey(username)) {
+            if (!username.equalsIgnoreCase(Configuration.getInstance().getValue("BROADCASTER_username"))) {
+                switch (operation) {
+                    case "+o":
+                        set(username, Permission.MODERATOR);
+                        break;
+                    case "-o":
+                        set(username, Permission.NORMAL);
+                        break;
+                }
+            } else {
+                set(username, Permission.BROADCASTER);
+            }
+        }
+    }
+
+    @Override
+    public void onUserList(String channel, User[] users) {
+        for(User u : users){
+            System.out.println(u.toString() + " isOP: " + u.isOp() + " hasVoice: " + u.hasVoice());
+        }
+    }
+    
 }

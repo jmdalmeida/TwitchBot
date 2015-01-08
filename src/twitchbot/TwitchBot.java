@@ -7,27 +7,26 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jibble.pircbot.*;
 import twitchbot.Commands.ChatCommands;
+import twitchbot.Commands.DefaultCommands;
 import twitchbot.Config.Configuration;
+import twitchbot.Modules.BotModule;
+import twitchbot.Modules.Clock.Clock;
 import twitchbot.Modules.Topic.Topic;
-import twitchbot.Viewers.Permission;
-import twitchbot.Viewers.Viewer;
-import twitchbot.Modules.WordFilter.WordFilter;
+import twitchbot.Modules.TextFilter.TextFilter;
 import twitchbot.Viewers.Viewers;
 
 public class TwitchBot extends PircBot {
 
-    public final Viewers viewers;
-    private final ChatCommands commands;
-    
     //Modules
-    private WordFilter wordFilter;
-    public Topic topic;
+    private Map<String, BotModule> modules;
 
     private final String channel;
     private long connectedTimestamp;
 
     public TwitchBot() {
         connectedTimestamp = System.nanoTime();
+        setupModules();
+        ((ChatCommands) modules.get("ChatCommands")).setupCommands(modules.values().toArray());
         this.setName(Configuration.getInstance().getValue("BOT_username"));
         this.setVerbose(true);
         try {
@@ -37,62 +36,24 @@ public class TwitchBot extends PircBot {
         }
         channel = Configuration.getInstance().getValue("CHANNEL_name");
         this.joinChannel("#" + channel);
-        commands = new ChatCommands(this);
-        viewers = new Viewers();
-        setupModules();
     }
 
-    @Override
-    protected void onMessage(String channel, String sender, String login, String hostname, String message) {
-        commands.runCommand(channel, sender, login, hostname, message);
-        String[] msg = message.split(" ");
-        if (wordFilter.isRunning() && !wordFilter.validateWords(msg)) {
-            this.sendMessage(channel, "/" + Configuration.getInstance().getValue("WORDFILTER_action") + " " + sender);
-            this.sendMessage(channel, Configuration.getInstance().getValue("WORDFILTER_output").replace("$sender$", sender));
-        }
-    }
-
-    @Override
-    protected void onJoin(String channel, String sender, String login, String hostname) {
-        viewers.addNewViewer(sender);
-        if (!sender.equalsIgnoreCase(Configuration.getInstance().getValue("BOT_username"))) {
-            sendMessage(channel, "Hello " + sender + ", how are you?");
-        } else {
-            this.sendMessage(channel, "Up and running!");
-        }
-    }
-
-    @Override
-    protected void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
-        viewers.removeViewer(sourceNick);
-    }
-
-    @Override
-    protected void onUserMode(String targetNick, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
-        //#Channel +o user
-        String[] params = mode.split(" ");
-        String chn = params[0];
-        String operation = params[1];
-        String username = params[2];
-        if (chn.equalsIgnoreCase("#" + channel) && viewers.exists(username)) {
-            if (!username.equalsIgnoreCase(Configuration.getInstance().getValue("BROADCASTER_username"))) {
-                switch (operation) {
-                    case "+o":
-                        viewers.set(username, Permission.MODERATOR);
-                        break;
-                    case "-o":
-                        viewers.set(username, Permission.NORMAL);
-                        break;
-                }
-            } else {
-                viewers.set(username, Permission.BROADCASTER);
-            }
-        }
+    public String getChannel() {
+        return channel;
     }
 
     private void setupModules() {
-        wordFilter = new WordFilter(Configuration.getInstance().getValue("WORDFILTER_status"));
-        topic = new Topic();
+        modules = new HashMap<>();
+        modules.put("DefaultCommands", new DefaultCommands(this));
+        modules.put("ChatCommands", new ChatCommands(this));
+        modules.put("TextFilter", new TextFilter(this));
+        modules.put("Viewers", new Viewers(this));
+        modules.put("Topic", new Topic(this));
+        modules.put("Clock", new Clock(this));
+    }
+
+    public BotModule getModule(String key) {
+        return modules.get(key);
     }
 
     public void quitAndExit() {
@@ -109,6 +70,48 @@ public class TwitchBot extends PircBot {
 
     public long getConnectedTimestamp() {
         return connectedTimestamp;
+    }
+
+    public boolean isMe(String s) {
+        return getName().equals(s);
+    }
+
+    @Override
+    protected void onMessage(String channel, String sender, String login, String hostname, String message) {
+        modules.values().stream().forEach((m) -> {
+            m.onMessage(channel, sender, login, hostname, message);
+        });
+    }
+
+    @Override
+    protected void onUserList(String channel, User[] users) {
+        modules.values().stream().forEach((m) -> {
+            m.onUserList(channel, users);
+        });
+    }
+
+    @Override
+    protected void onJoin(String channel, String sender, String login, String hostname) {
+        if (sender.equalsIgnoreCase(getName())) {
+            this.sendMessage(channel, "Up and running!");
+        }
+        modules.values().stream().forEach((m) -> {
+            m.onJoin(channel, sender, login, hostname);
+        });
+    }
+
+    @Override
+    protected void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
+        modules.values().stream().forEach((m) -> {
+            m.onQuit(sourceNick, sourceLogin, sourceHostname, reason);
+        });
+    }
+
+    @Override
+    protected void onUserMode(String targetNick, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
+        modules.values().stream().forEach((m) -> {
+            m.onUserMode(targetNick, sourceNick, sourceLogin, sourceHostname, mode);
+        });
     }
 
 }
