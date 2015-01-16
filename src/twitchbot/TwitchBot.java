@@ -11,13 +11,13 @@ import twitchbot.Commands.DefaultCommands;
 import twitchbot.Config.Configuration;
 import twitchbot.Modules.BotModule;
 import twitchbot.Modules.Clock.Clock;
+import twitchbot.Modules.QuestionsAndAnswers.QuestionsAndAnswers;
 import twitchbot.Modules.Topic.Topic;
 import twitchbot.Modules.TextFilter.TextFilter;
 import twitchbot.Viewers.Viewers;
 
 public class TwitchBot extends PircBot {
 
-    //Modules
     private Map<String, BotModule> modules;
 
     private final String channel;
@@ -50,6 +50,7 @@ public class TwitchBot extends PircBot {
         modules.put("Viewers", new Viewers(this));
         modules.put("Topic", new Topic(this));
         modules.put("Clock", new Clock(this));
+        modules.put("QuestionsAndAnswers", new QuestionsAndAnswers(this));
     }
 
     public BotModule getModule(String key) {
@@ -74,6 +75,10 @@ public class TwitchBot extends PircBot {
 
     public boolean isMe(String s) {
         return getName().equals(s);
+    }
+    
+    public void sendMessage(String msg){
+        sendMessage("#" + channel, msg);
     }
 
     @Override

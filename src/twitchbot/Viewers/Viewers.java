@@ -21,7 +21,7 @@ public class Viewers extends BotModule {
         return viewers.containsKey(username);
     }
 
-    public void set(String username, Permission p) {
+    public void setPermission(String username, Permission p) {
         viewers.get(username).setPermissionLevel(p);
     }
 
@@ -30,8 +30,10 @@ public class Viewers extends BotModule {
     }
 
     public void addNewViewer(String username) {
-        if(viewers.containsKey(username)) return;
-        Permission p = Permission.NORMAL;
+        if (viewers.containsKey(username)) {
+            return;
+        }
+        Permission p = username.equalsIgnoreCase(Configuration.getInstance().getValue("BROADCASTER_username")) ? Permission.BROADCASTER : Permission.NORMAL;
         String nick = username.toLowerCase();
         Viewer v = new Viewer(nick, p, System.nanoTime());
         viewers.put(nick, v);
@@ -78,23 +80,16 @@ public class Viewers extends BotModule {
             if (!username.equalsIgnoreCase(Configuration.getInstance().getValue("BROADCASTER_username"))) {
                 switch (operation) {
                     case "+o":
-                        set(username, Permission.MODERATOR);
+                        setPermission(username, Permission.MODERATOR);
                         break;
                     case "-o":
-                        set(username, Permission.NORMAL);
+                        setPermission(username, Permission.NORMAL);
                         break;
                 }
             } else {
-                set(username, Permission.BROADCASTER);
+                setPermission(username, Permission.BROADCASTER);
             }
         }
     }
 
-    @Override
-    public void onUserList(String channel, User[] users) {
-        for(User u : users){
-            System.out.println(u.toString() + " isOP: " + u.isOp() + " hasVoice: " + u.hasVoice());
-        }
-    }
-    
 }

@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import twitchbot.Config.Configuration;
 import twitchbot.Modules.BotModule;
 import twitchbot.Modules.PriorityLevel;
 import twitchbot.TwitchBot;
@@ -19,8 +18,29 @@ import twitchbot.Viewers.Viewers;
 
 public class ChatCommands extends BotModule {
 
+    public static String extractMessage(String msg) {
+        msg = msg.trim();
+        List<String> pc = new ArrayList<>();
+        String[] ss = msg.split(" ");
+        for (String s : ss) {
+            if (s.startsWith("!")) {
+                pc.add(s);
+            } else {
+                break;
+            }
+        }
+        int combinedLen = 0;
+        for (String c : pc) {
+            combinedLen += (c.length() + 1);
+        }
+        return combinedLen < msg.length() ? msg.substring(combinedLen) : "";
+    }
+
+    private static final String CUSTOM_FILENAME = "customcommands";
+
     private final TwitchBot bot;
-    private Map<String, ChatFunction> commands;
+    private Map<String, ChatFunction> moduleCommands;
+    private Map<String, ChatFunction> customCommands;
 
     public ChatCommands(TwitchBot bot) {
         super(bot, PriorityLevel.NORMAL);
@@ -28,10 +48,10 @@ public class ChatCommands extends BotModule {
     }
 
     public void setupCommands(Object[] modules) {
-        commands = new HashMap<>();
+        moduleCommands = new HashMap<>();
         for (Object o : modules) {
             BotModule bm = (BotModule) o;
-            commands.putAll(bm.getModuleCommands());
+            moduleCommands.putAll(bm.getModuleCommands());
         }
         try {
             setupCustomCommands();
@@ -41,7 +61,8 @@ public class ChatCommands extends BotModule {
     }
 
     private void setupCustomCommands() throws FileNotFoundException {
-        URL url = getClass().getResource(Configuration.getInstance().getValue("CHATCOMMANDS_filename"));
+        customCommands = new HashMap<>();
+        URL url = getClass().getResource(CUSTOM_FILENAME);
         try (Scanner scanner = new Scanner(new File(url.getPath()))) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
@@ -54,16 +75,18 @@ public class ChatCommands extends BotModule {
                 boolean enabled = "true".equalsIgnoreCase(ss[1]);
                 String msg = ss[2];
                 cmds.stream().forEach((c) -> {
-                    commands.putIfAbsent(c, new ChatFunction(Permission.NORMAL, enabled) {
+                    if (!moduleCommands.containsKey(c)) {
+                        customCommands.putIfAbsent(c, new ChatFunction(Permission.NORMAL, enabled) {
 
-                        @Override
-                        public void function(String channel, String sender, String login, String hostname, String message) {
-                            bot.sendMessage(channel, msg);
-                        }
-                    });
+                            @Override
+                            public void function(String channel, String sender, String login, String hostname, String message) {
+                                bot.sendMessage(channel, msg);
+                            }
+                        });
+                    }
                 });
             }
-        };
+        }
     }
 
     @Override
@@ -73,12 +96,12 @@ public class ChatCommands extends BotModule {
             return;
         }
         String cmd = tokens[0];
-        if (commands.containsKey(cmd)) {
+        if (moduleCommands.containsKey(cmd)) {
             new Thread(new Runnable() {
 
                 @Override
                 public void run() {
-                    ChatFunction func = commands.get(cmd);
+                    ChatFunction func = moduleCommands.get(cmd);
                     if (func.getPermission() != Permission.NORMAL) {
                         Viewer u = ((Viewers) bot.getModule("Viewers")).getViewer(sender);
                         if (u != null) {
@@ -95,6 +118,8 @@ public class ChatCommands extends BotModule {
                     }
                 }
             }).start();
+        } else if (customCommands.containsKey(cmd)) {
+            customCommands.get(cmd).doFunction(channel, sender, login, hostname, message);
         }
     }
 
@@ -105,7 +130,7 @@ public class ChatCommands extends BotModule {
 
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
-                String cmd = commands.keySet().toString();
+                String cmd = moduleCommands.keySet().toString();
                 bot.sendMessage(channel, "Available commands are: " + cmd.substring(1, cmd.length() - 1) + ".");
             }
 

@@ -21,9 +21,10 @@
         - Request song
         - Current song
     - Q&A
+        - startq&a
+        - endq&a
         - question
         - nextquestion
-        - deletequestion
     - News
         - Breaking News
     - Weather
