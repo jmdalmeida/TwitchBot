@@ -39,4 +39,7 @@ public abstract class BotModule {
     public void onUserList(String channel, User[] users) {
     }
 
+    public void onDisconnect() {
+    }
+    
 }

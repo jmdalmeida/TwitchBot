@@ -26,7 +26,7 @@ public class DefaultCommands extends BotModule {
                 long elapsedTime = System.nanoTime() - bot.getConnectedTimestamp();
                 final long hr = TimeUnit.NANOSECONDS.toHours(elapsedTime);
                 final long min = TimeUnit.NANOSECONDS.toMinutes(elapsedTime);
-                bot.sendMessage(channel, "I've been up for " + String.format("%02d hours, %02d minutes", hr, min) + ".");
+                bot.sendMessage("I've been up for " + String.format("%02d hours, %02d minutes", hr, min) + ".");
             }
 
         });
@@ -35,9 +35,6 @@ public class DefaultCommands extends BotModule {
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
                 ((Viewers) bot.getModule("Viewers")).listViewers();
-                for (User u : bot.getUsers(channel)) {
-                    System.out.println(u.toString() + " isOP: " + u.isOp() + " hasVoice: " + u.hasVoice());
-                }
             }
 
         });
@@ -46,6 +43,22 @@ public class DefaultCommands extends BotModule {
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
                 bot.quitAndExit();
+            }
+
+        });
+        cmds.put("!mute", new ChatFunction(Permission.BROADCASTER, true) {
+
+            @Override
+            public void function(String channel, String sender, String login, String hostname, String message) {
+                bot.mute();
+            }
+
+        });
+        cmds.put("!unmute", new ChatFunction(Permission.BROADCASTER, true) {
+
+            @Override
+            public void function(String channel, String sender, String login, String hostname, String message) {
+                bot.unmute();
             }
 
         });

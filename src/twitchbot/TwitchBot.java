@@ -11,6 +11,7 @@ import twitchbot.Commands.DefaultCommands;
 import twitchbot.Config.Configuration;
 import twitchbot.Modules.BotModule;
 import twitchbot.Modules.Clock.Clock;
+import twitchbot.Modules.CycleMessages.CycleMessages;
 import twitchbot.Modules.QuestionsAndAnswers.QuestionsAndAnswers;
 import twitchbot.Modules.Topic.Topic;
 import twitchbot.Modules.TextFilter.TextFilter;
@@ -22,6 +23,8 @@ public class TwitchBot extends PircBot {
 
     private final String channel;
     private long connectedTimestamp;
+
+    private boolean muted = true;
 
     public TwitchBot() {
         connectedTimestamp = System.nanoTime();
@@ -51,10 +54,19 @@ public class TwitchBot extends PircBot {
         modules.put("Topic", new Topic(this));
         modules.put("Clock", new Clock(this));
         modules.put("QuestionsAndAnswers", new QuestionsAndAnswers(this));
+        modules.put("CycleMessages", new CycleMessages(this));
     }
 
     public BotModule getModule(String key) {
         return modules.get(key);
+    }
+
+    public void mute() {
+        muted = true;
+    }
+
+    public void unmute() {
+        muted = false;
     }
 
     public void quitAndExit() {
@@ -76,15 +88,18 @@ public class TwitchBot extends PircBot {
     public boolean isMe(String s) {
         return getName().equals(s);
     }
-    
-    public void sendMessage(String msg){
-        sendMessage("#" + channel, msg);
+
+    public synchronized void sendMessage(String msg) {
+        if (!muted) {
+            sendMessage("#" + channel, msg);
+        }
     }
 
     @Override
     protected void onMessage(String channel, String sender, String login, String hostname, String message) {
+        String normalizedMsg = ChatCommands.normalizeMessage(message);
         modules.values().stream().forEach((m) -> {
-            m.onMessage(channel, sender, login, hostname, message);
+            m.onMessage(channel, sender, login, hostname, normalizedMsg);
         });
     }
 
@@ -116,6 +131,13 @@ public class TwitchBot extends PircBot {
     protected void onUserMode(String targetNick, String sourceNick, String sourceLogin, String sourceHostname, String mode) {
         modules.values().stream().forEach((m) -> {
             m.onUserMode(targetNick, sourceNick, sourceLogin, sourceHostname, mode);
+        });
+    }
+
+    @Override
+    protected void onDisconnect() {
+        modules.values().stream().forEach((m) -> {
+            m.onDisconnect();
         });
     }
 

@@ -19,6 +19,7 @@ import twitchbot.TwitchBot;
 import twitchbot.Viewers.Permission;
 
 public class TextFilter extends BotModule {
+
     private static final String FILENAME = "textlist";
 
     private PermitList permitList;
@@ -120,7 +121,7 @@ public class TextFilter extends BotModule {
             public void function(String channel, String sender, String login, String hostname, String message) {
                 String s = permitList.toString();
                 if (!s.isEmpty()) {
-                    bot.sendMessage(channel, "Permit List: " + permitList.toString());
+                    bot.sendMessage("Permit List: " + permitList.toString());
                 }
             }
         });

@@ -2,7 +2,6 @@ package twitchbot.Viewers;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.jibble.pircbot.User;
 import twitchbot.Config.Configuration;
 import twitchbot.Modules.BotModule;
 import twitchbot.Modules.PriorityLevel;

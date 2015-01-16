@@ -18,6 +18,10 @@ import twitchbot.Viewers.Viewers;
 
 public class ChatCommands extends BotModule {
 
+    public static String normalizeMessage(String msg) {
+        return msg.toLowerCase().trim();
+    }
+
     public static String extractMessage(String msg) {
         msg = msg.trim();
         List<String> pc = new ArrayList<>();
@@ -38,13 +42,11 @@ public class ChatCommands extends BotModule {
 
     private static final String CUSTOM_FILENAME = "customcommands";
 
-    private final TwitchBot bot;
     private Map<String, ChatFunction> moduleCommands;
     private Map<String, ChatFunction> customCommands;
 
     public ChatCommands(TwitchBot bot) {
         super(bot, PriorityLevel.NORMAL);
-        this.bot = bot;
     }
 
     public void setupCommands(Object[] modules) {
@@ -80,7 +82,7 @@ public class ChatCommands extends BotModule {
 
                             @Override
                             public void function(String channel, String sender, String login, String hostname, String message) {
-                                bot.sendMessage(channel, msg);
+                                bot.sendMessage(msg);
                             }
                         });
                     }
@@ -108,7 +110,7 @@ public class ChatCommands extends BotModule {
                             if (func.getPermission().getValue() <= u.getPermissionLevel().getValue()) {
                                 func.doFunction(channel, sender, login, hostname, message);
                             } else {
-                                bot.sendMessage(channel, "You don't have permission to run this command, " + sender + ".");
+                                bot.sendMessage("You don't have permission to run this command, " + sender + ".");
                             }
                         } else {
                             System.err.println("Error processing " + sender + "'s command (" + cmd + "): Viewer not listed.");
@@ -131,7 +133,7 @@ public class ChatCommands extends BotModule {
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
                 String cmd = moduleCommands.keySet().toString();
-                bot.sendMessage(channel, "Available commands are: " + cmd.substring(1, cmd.length() - 1) + ".");
+                bot.sendMessage("Available commands are: " + cmd.substring(1, cmd.length() - 1) + ".");
             }
 
         });
