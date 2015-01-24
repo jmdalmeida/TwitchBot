@@ -29,7 +29,7 @@ public class QuestionsAndAnswers extends BotModule {
         if (!isOngoing) {
             isOngoing = true;
             questions.clear();
-            bot.sendMessage(MESSAGE_PREFIX + "A new Q&A has started. Type !question \"question here\" to submit your question to the broadcaster.");
+            bot.botMessage(MESSAGE_PREFIX + "A new Q&A has started. Type !question \"question here\" to submit your question to the broadcaster.");
         }
     }
 
@@ -37,7 +37,7 @@ public class QuestionsAndAnswers extends BotModule {
         if (isOngoing) {
             isOngoing = false;
             questions.clear();
-            bot.sendMessage(MESSAGE_PREFIX + "The Q&A has ended.");
+            bot.botMessage(MESSAGE_PREFIX + "The Q&A has ended.");
         }
     }
 
@@ -60,10 +60,10 @@ public class QuestionsAndAnswers extends BotModule {
         if (isOngoing) {
             currentQuestion = questions.pollFirst();
             if (currentQuestion != null) {
-                bot.sendMessage(MESSAGE_PREFIX + "Question: \"" + currentQuestion.getQuestion() + "\" by "
+                bot.botMessage(MESSAGE_PREFIX + "Question: \"" + currentQuestion.getQuestion() + "\" by "
                         + currentQuestion.getViewer() + ". " + questions.size() + " questions left. (@" + bot.getChannel() + ")");
             } else {
-                bot.sendMessage(MESSAGE_PREFIX + "There's no questions in queue. (@" + bot.getChannel() + ")");
+                bot.botMessage(MESSAGE_PREFIX + "There's no questions in queue. (@" + bot.getChannel() + ")");
             }
         }
     }
@@ -96,7 +96,8 @@ public class QuestionsAndAnswers extends BotModule {
 
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
-                String question = ChatCommands.extractMessage(message);
+                String[] exc = {"!question"};
+                String question = ChatCommands.extractMessage(exc, message);
                 if (question.length() == 0) {
                     return;
                 }

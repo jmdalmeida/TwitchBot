@@ -6,7 +6,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Scanner;
 import twitchbot.Modules.BotModule;
@@ -19,25 +21,23 @@ import twitchbot.Viewers.Viewers;
 public class ChatCommands extends BotModule {
 
     public static String normalizeMessage(String msg) {
-        return msg.toLowerCase().trim();
+        return msg.trim();
     }
 
-    public static String extractMessage(String msg) {
-        msg = msg.trim();
-        List<String> pc = new ArrayList<>();
-        String[] ss = msg.split(" ");
-        for (String s : ss) {
-            if (s.startsWith("!")) {
-                pc.add(s);
-            } else {
-                break;
+    public static String extractMessage(String[] exclude, String msg) {
+        List<String> words = new ArrayList<>(Arrays.asList(msg.split(" ")));
+        List<String> exc = new ArrayList<>(Arrays.asList(exclude));
+        Iterator<String> i = words.iterator();
+        while (i.hasNext()) {
+            String s = i.next();
+            if (exc.contains(s)) {
+                i.remove();
+                exc.remove(s);
             }
         }
-        int combinedLen = 0;
-        for (String c : pc) {
-            combinedLen += (c.length() + 1);
-        }
-        return combinedLen < msg.length() ? msg.substring(combinedLen) : "";
+        String m = "";
+        m = words.stream().map((s) -> s + " ").reduce(m, String::concat);
+        return m;
     }
 
     private static final String CUSTOM_FILENAME = "customcommands";
@@ -78,16 +78,31 @@ public class ChatCommands extends BotModule {
                 String msg = ss[2];
                 cmds.stream().forEach((c) -> {
                     if (!moduleCommands.containsKey(c)) {
-                        customCommands.putIfAbsent(c, new ChatFunction(Permission.NORMAL, enabled) {
-
-                            @Override
-                            public void function(String channel, String sender, String login, String hostname, String message) {
-                                bot.sendMessage(msg);
-                            }
-                        });
+                        addCustomCommand(c, msg, enabled);
                     }
                 });
             }
+        }
+    }
+
+    private void addCustomCommand(String key, String msg, boolean enabled) {
+        customCommands.putIfAbsent(key, new ChatFunction(Permission.NORMAL, enabled) {
+
+            @Override
+            public void function(String channel, String sender, String login, String hostname, String message) {
+                bot.botMessage(msg);
+            }
+        });
+    }
+
+    private void removeCustomCommand(String key) {
+        customCommands.remove(key);
+    }
+
+    private void setCustomCommandState(String key, boolean enabled) {
+        ChatFunction cf = customCommands.get(key);
+        if (cf != null) {
+            cf.setStatus(enabled);
         }
     }
 
@@ -110,7 +125,7 @@ public class ChatCommands extends BotModule {
                             if (func.getPermission().getValue() <= u.getPermissionLevel().getValue()) {
                                 func.doFunction(channel, sender, login, hostname, message);
                             } else {
-                                bot.sendMessage("You don't have permission to run this command, " + sender + ".");
+                                bot.botMessage("You don't have permission to run this command, " + sender + ".");
                             }
                         } else {
                             System.err.println("Error processing " + sender + "'s command (" + cmd + "): Viewer not listed.");
@@ -120,7 +135,7 @@ public class ChatCommands extends BotModule {
                     }
                 }
             }).start();
-        } else if (customCommands.containsKey(cmd)) {
+        } else if (customCommands.containsKey(cmd) && tokens.length == 1) {
             customCommands.get(cmd).doFunction(channel, sender, login, hostname, message);
         }
     }
@@ -133,7 +148,35 @@ public class ChatCommands extends BotModule {
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
                 String cmd = moduleCommands.keySet().toString();
-                bot.sendMessage("Available commands are: " + cmd.substring(1, cmd.length() - 1) + ".");
+                bot.botMessage("Available commands are: " + cmd.substring(1, cmd.length() - 1) + ".");
+            }
+
+        });
+        //!addcommand <command> <message>
+        cmds.put("!addcommand", new ChatFunction(Permission.BROADCASTER, true) {
+
+            @Override
+            public void function(String channel, String sender, String login, String hostname, String message) {
+                String[] tokens = message.split(" ");
+                if (tokens.length < 3) {
+                    return;
+                }
+                String[] exc = {tokens[0], tokens[1]};
+                String msg = extractMessage(exc, message);
+                addCustomCommand(tokens[1], msg, true);
+            }
+
+        });
+        //!removecommand <command>
+        cmds.put("!removecommand", new ChatFunction(Permission.BROADCASTER, true) {
+
+            @Override
+            public void function(String channel, String sender, String login, String hostname, String message) {
+                String[] tokens = message.split(" ");
+                if (tokens.length < 2) {
+                    return;
+                }
+                removeCustomCommand(tokens[1]);
             }
 
         });

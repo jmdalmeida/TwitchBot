@@ -43,7 +43,7 @@ public class Topic extends BotModule {
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
                 if (isTopicSet()) {
-                    bot.sendMessage("Topic: " + getTopic());
+                    bot.botMessage("Topic: " + getTopic());
                 }
             }
 

@@ -121,7 +121,7 @@ public class TextFilter extends BotModule {
             public void function(String channel, String sender, String login, String hostname, String message) {
                 String s = permitList.toString();
                 if (!s.isEmpty()) {
-                    bot.sendMessage("Permit List: " + permitList.toString());
+                    bot.botMessage("Permit List: " + permitList.toString());
                 }
             }
         });

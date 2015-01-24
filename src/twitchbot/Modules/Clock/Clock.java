@@ -23,7 +23,7 @@ public class Clock extends BotModule {
 
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
-                bot.sendMessage("The current date is " + new SimpleDateFormat("dd/MM/yyyy").format(new Date()) + ".");
+                bot.botMessage("The current date is " + new SimpleDateFormat("dd/MM/yyyy").format(new Date()) + ".");
             }
 
         });
@@ -31,7 +31,7 @@ public class Clock extends BotModule {
 
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
-                bot.sendMessage("The current time is " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + " GMT.");
+                bot.botMessage("The current time is " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + " GMT.");
             }
 
         });

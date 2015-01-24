@@ -26,7 +26,7 @@ public class DefaultCommands extends BotModule {
                 long elapsedTime = System.nanoTime() - bot.getConnectedTimestamp();
                 final long hr = TimeUnit.NANOSECONDS.toHours(elapsedTime);
                 final long min = TimeUnit.NANOSECONDS.toMinutes(elapsedTime);
-                bot.sendMessage("I've been up for " + String.format("%02d hours, %02d minutes", hr, min) + ".");
+                bot.botMessage("I've been up for " + String.format("%02d hours, %02d minutes", hr, min) + ".");
             }
 
         });

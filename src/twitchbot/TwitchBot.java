@@ -24,7 +24,7 @@ public class TwitchBot extends PircBot {
     private final String channel;
     private long connectedTimestamp;
 
-    private boolean muted = true;
+    private boolean muted;
 
     public TwitchBot() {
         connectedTimestamp = System.nanoTime();
@@ -62,23 +62,25 @@ public class TwitchBot extends PircBot {
     }
 
     public void mute() {
+        botMessage("MrDestructoid OK! OK! I'll shut up...");
         muted = true;
     }
 
     public void unmute() {
         muted = false;
+        botMessage("MrDestructoid FREEDOM!");
     }
 
     public void quitAndExit() {
-        this.sendMessage("#" + channel, "I'm out, cya!");
-        this.partChannel(channel);
-        this.quitServer();
+        botMessage("I'm out, cya!");
+        partChannel(channel);
+        quitServer();
         try {
             Thread.sleep(1000); //give it time to send the message
         } catch (InterruptedException ex) {
             Logger.getLogger(TwitchBot.class.getName()).log(Level.SEVERE, null, ex);
         }
-        this.dispose();
+        dispose();
     }
 
     public long getConnectedTimestamp() {
@@ -89,7 +91,7 @@ public class TwitchBot extends PircBot {
         return getName().equals(s);
     }
 
-    public synchronized void sendMessage(String msg) {
+    public synchronized void botMessage(String msg) {
         if (!muted) {
             sendMessage("#" + channel, msg);
         }
@@ -113,7 +115,7 @@ public class TwitchBot extends PircBot {
     @Override
     protected void onJoin(String channel, String sender, String login, String hostname) {
         if (sender.equalsIgnoreCase(getName())) {
-            this.sendMessage(channel, "Up and running!");
+            botMessage("Up and running!");
         }
         modules.values().stream().forEach((m) -> {
             m.onJoin(channel, sender, login, hostname);

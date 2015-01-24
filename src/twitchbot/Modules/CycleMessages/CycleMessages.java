@@ -1,10 +1,7 @@
 package twitchbot.Modules.CycleMessages;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import twitchbot.Commands.ChatCommands;
 import twitchbot.Commands.ChatFunction;
 import twitchbot.Modules.BotModule;
@@ -15,7 +12,6 @@ import twitchbot.Viewers.Permission;
 public class CycleMessages extends BotModule {
 
     private final Map<String, CycleCommand> messages;
-    private final Object lock = new Object();
 
     public CycleMessages(TwitchBot bot) {
         super(bot, PriorityLevel.NORMAL);
@@ -45,7 +41,8 @@ public class CycleMessages extends BotModule {
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
                 String[] tokens = message.split(" ");
-                String msg = ChatCommands.extractMessage(message).substring(tokens[1].length() + tokens[2].length() + 2);
+                String[] exc = {tokens[0], tokens[1], tokens[2]};
+                String msg = ChatCommands.extractMessage(exc, message);
                 addNewCommand(tokens[1], msg, Long.parseLong(tokens[2]));
             }
 
@@ -98,7 +95,7 @@ public class CycleMessages extends BotModule {
         @Override
         public void run() {
             while (cycling && bot.isConnected()) {
-                bot.sendMessage(msg);
+                bot.botMessage(msg);
                 try {
                     Thread.sleep(interval * 1000);
                 } catch (InterruptedException ex) {
