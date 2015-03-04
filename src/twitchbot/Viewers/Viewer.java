@@ -4,12 +4,10 @@ public class Viewer {
     
     private final String username;
     private Permission permissionLevel;
-    private final long timeConnected;
 
-    public Viewer(String username, Permission permissionLevel, long timeConnected) {
+    public Viewer(String username, Permission permissionLevel) {
         this.username = username;
         this.permissionLevel = permissionLevel;
-        this.timeConnected = timeConnected;
     }
 
     public String getUsername() {
@@ -22,10 +20,6 @@ public class Viewer {
 
     public void setPermissionLevel(Permission permissionLevel) {
         this.permissionLevel = permissionLevel;
-    }
-
-    public long getTimeConnected() {
-        return timeConnected;
     }
 
     @Override

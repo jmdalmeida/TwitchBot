@@ -1,19 +1,35 @@
 package twitchbot.Viewers;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import twitchbot.Config.Configuration;
 import twitchbot.Modules.BotModule;
 import twitchbot.Modules.PriorityLevel;
+import twitchbot.TwitchAPI;
 import twitchbot.TwitchBot;
 
 public class Viewers extends BotModule {
 
-    private final Map<String, Viewer> viewers;
+    private Map<String, Viewer> viewers;
 
     public Viewers(TwitchBot bot) {
         super(bot, PriorityLevel.NORMAL);
+        setupViewers();
+    }
+
+    private void setupViewers() {
         viewers = new HashMap<>();
+        try {
+            Viewer[] currentViewers = TwitchAPI.getViewers(bot.getChannel());
+            for (Viewer v : currentViewers) {
+                viewers.put(v.getUsername(), v);
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(Viewers.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public boolean exists(String username) {
@@ -32,9 +48,9 @@ public class Viewers extends BotModule {
         if (viewers.containsKey(username)) {
             return;
         }
-        Permission p = username.equalsIgnoreCase(Configuration.getInstance().getValue("BROADCASTER_username")) ? Permission.BROADCASTER : Permission.NORMAL;
+        Permission p = username.equalsIgnoreCase(Configuration.getInstance().getProperty("broadcaster")) ? Permission.BROADCASTER : Permission.NORMAL;
         String nick = username.toLowerCase();
-        Viewer v = new Viewer(nick, p, System.nanoTime());
+        Viewer v = new Viewer(nick, p);
         viewers.put(nick, v);
         System.out.println("Viewers list: Adding " + nick + ".");
     }
@@ -76,7 +92,7 @@ public class Viewers extends BotModule {
         String operation = params[1];
         String username = params[2];
         if (chn.equalsIgnoreCase("#" + bot.getChannel()) && viewers.containsKey(username)) {
-            if (!username.equalsIgnoreCase(Configuration.getInstance().getValue("BROADCASTER_username"))) {
+            if (!username.equalsIgnoreCase(Configuration.getInstance().getProperty("broadcaster"))) {
                 switch (operation) {
                     case "+o":
                         setPermission(username, Permission.MODERATOR);

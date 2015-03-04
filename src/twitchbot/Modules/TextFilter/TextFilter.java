@@ -40,7 +40,7 @@ public class TextFilter extends BotModule {
         } catch (FileNotFoundException ex) {
             Logger.getLogger(TextFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
-        maxLen = Integer.parseInt(Configuration.getInstance().getValue("TEXTFILTER_maxlen"));
+        maxLen = Integer.parseInt(Configuration.getInstance().getProperty("maxlen"));
     }
 
     public boolean isRunning() {

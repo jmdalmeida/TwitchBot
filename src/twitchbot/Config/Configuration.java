@@ -1,25 +1,19 @@
 package twitchbot.Config;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Configuration {
 
     private static Configuration instance = null;
-    private Map<String, String> configMap;
 
-    protected Configuration() {
-        try {
-            setup();
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Configuration.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    private Properties prop;
+
+    private Configuration() {
+        setup();
     }
 
     public static Configuration getInstance() {
@@ -28,26 +22,24 @@ public class Configuration {
         }
         return instance;
     }
-
-    public String getValue(String key) {
-        return configMap.get(key);
+    
+    public String getProperty(String key){
+        return prop.getProperty(key);
     }
 
-    private void setup() throws FileNotFoundException {
-        configMap = new HashMap<>();
-        String currentParent = "";
-        URL url = getClass().getResource("config");
-        try (Scanner scanner = new Scanner(new File(url.getPath()))) {
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                if (line.charAt(0) == '[') {
-                    currentParent = line;
-                } else {
-                    String[] l = line.split("=");
-                    configMap.put(currentParent.substring(1, currentParent.length() - 1) + "_" + l[0], l[1]);
-                }
+    private void setup() {
+        prop = new Properties();
+        String propFileName = "config.properties";
+
+        InputStream inputStream = getClass().getResourceAsStream(propFileName);
+
+        if (inputStream != null) {
+            try {
+                prop.load(inputStream);
+            } catch (IOException ex) {
+                Logger.getLogger(Configuration.class.getName()).log(Level.SEVERE, null, ex);
             }
-        };
+        }
     }
 
 }

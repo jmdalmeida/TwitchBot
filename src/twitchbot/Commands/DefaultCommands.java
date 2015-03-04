@@ -3,7 +3,6 @@ package twitchbot.Commands;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.jibble.pircbot.User;
 import twitchbot.Modules.BotModule;
 import twitchbot.Modules.PriorityLevel;
 import twitchbot.TwitchBot;
@@ -20,7 +19,7 @@ public class DefaultCommands extends BotModule {
     public Map<String, ChatFunction> getModuleCommands() {
         Map<String, ChatFunction> cmds = new HashMap<>();
         cmds.put("!uptime", new ChatFunction(Permission.NORMAL, true) {
-
+            // TODO: Remake using the twitch api
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
                 long elapsedTime = System.nanoTime() - bot.getConnectedTimestamp();
@@ -34,7 +33,7 @@ public class DefaultCommands extends BotModule {
 
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
-                ((Viewers) bot.getModule("Viewers")).listViewers();
+                ((Viewers) bot.getModuleManager().getModule("Viewers")).listViewers();
             }
 
         });

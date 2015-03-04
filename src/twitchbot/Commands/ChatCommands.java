@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Scanner;
 import twitchbot.Modules.BotModule;
@@ -120,7 +119,7 @@ public class ChatCommands extends BotModule {
                 public void run() {
                     ChatFunction func = moduleCommands.get(cmd);
                     if (func.getPermission() != Permission.NORMAL) {
-                        Viewer u = ((Viewers) bot.getModule("Viewers")).getViewer(sender);
+                        Viewer u = ((Viewers) bot.getModuleManager().getModule("Viewers")).getViewer(sender);
                         if (u != null) {
                             if (func.getPermission().getValue() <= u.getPermissionLevel().getValue()) {
                                 func.doFunction(channel, sender, login, hostname, message);
