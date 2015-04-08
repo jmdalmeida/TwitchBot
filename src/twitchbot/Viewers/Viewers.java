@@ -1,7 +1,9 @@
 package twitchbot.Viewers;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,8 +62,18 @@ public class Viewers extends BotModule {
         System.out.println("Viewers list: Removing " + sourceNick + ".");
     }
 
-    public Object[] getViewers() {
-        return viewers.values().toArray();
+    public Viewer[] getViewers() {
+        return viewers.values().toArray(new Viewer[0]);
+    }
+
+    public Viewer[] getMods() {
+        List<Viewer> mods = new ArrayList<>();
+        for (Viewer v : getViewers()) {
+            if (v.getPermissionLevel().getValue() >= Permission.MODERATOR.getValue()) {
+                mods.add(v);
+            }
+        }
+        return mods.toArray(new Viewer[0]);
     }
 
     public void listViewers() {
