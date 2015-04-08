@@ -19,4 +19,4 @@ nbdist/
 nbactions.xml
 nb-configuration.xml
 
-src/twitchbot/Config/config
+src/twitchbot/Config/config.properties
