@@ -6,7 +6,6 @@ import java.util.Map;
 import twitchbot.Commands.ChatCommands;
 import twitchbot.Commands.ChatFunction;
 import twitchbot.Modules.BotModule;
-import twitchbot.Modules.PriorityLevel;
 import twitchbot.TwitchBot;
 import twitchbot.Viewers.Permission;
 
@@ -20,7 +19,7 @@ public class QuestionsAndAnswers extends BotModule {
     private boolean isOngoing;
 
     public QuestionsAndAnswers(TwitchBot bot) {
-        super(bot, PriorityLevel.NORMAL);
+        super(bot);
         questions = new LinkedList<>();
         isOngoing = false;
     }

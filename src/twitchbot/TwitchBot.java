@@ -7,20 +7,16 @@ import org.jibble.pircbot.*;
 import twitchbot.Commands.ChatCommands;
 import twitchbot.Config.Configuration;
 import twitchbot.Modules.ModuleManager;
-import twitchbot.Viewers.Viewer;
-import twitchbot.Viewers.Viewers;
 
 public class TwitchBot extends PircBot {
 
     private ModuleManager modules;
 
     private final String channel;
-    private long connectedTimestamp;
 
-    private boolean muted = true;
+    private boolean muted = false;
 
     public TwitchBot() {
-        connectedTimestamp = System.nanoTime();
         channel = Configuration.getInstance().getProperty("channel");
         setupModules();
         ((ChatCommands) modules.getModule("ChatCommands")).setupCommands(modules.getAllModules());
@@ -69,12 +65,8 @@ public class TwitchBot extends PircBot {
         dispose();
     }
 
-    public long getConnectedTimestamp() {
-        return connectedTimestamp;
-    }
-
     public boolean isMe(String s) {
-        return getName().equals(s);
+        return getName().equalsIgnoreCase(s);
     }
 
     public synchronized void botMessage(String msg) {

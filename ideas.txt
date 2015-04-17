@@ -4,9 +4,8 @@
     - Text Filter
 - Save config on quit
 - Custom commands
-    - New command
+    - New command (if exists, overrides)
     - Delete command
-    - Set command status
 - Modules:
     - Text Filter
         - Permit List
@@ -21,7 +20,11 @@
         - Request song
         - Current song
     - News
-        - Breaking News
-    - Weather
-    - Random Facts
+        - Breaking News (API)
+    - Weather (API)
+    - Random Facts (API)
     - Countdown timer
+    - Bookmark
+        - a viewer can type "!bookmark" and the bot will add him to a list with 
+        the current time and then will send a message through twitch with the link 
+        to the vod in the correct time

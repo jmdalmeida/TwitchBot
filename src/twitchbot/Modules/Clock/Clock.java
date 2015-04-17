@@ -6,14 +6,13 @@ import java.util.HashMap;
 import java.util.Map;
 import twitchbot.Commands.ChatFunction;
 import twitchbot.Modules.BotModule;
-import twitchbot.Modules.PriorityLevel;
 import twitchbot.TwitchBot;
 import twitchbot.Viewers.Permission;
 
 public class Clock extends BotModule {
 
     public Clock(TwitchBot bot) {
-        super(bot, PriorityLevel.MINOR);
+        super(bot);
     }
 
     @Override

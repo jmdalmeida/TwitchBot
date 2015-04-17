@@ -1,10 +1,12 @@
 package twitchbot.Commands;
 
+import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import twitchbot.Modules.BotModule;
-import twitchbot.Modules.PriorityLevel;
+import twitchbot.TwitchAPI;
 import twitchbot.TwitchBot;
 import twitchbot.Viewers.Permission;
 import twitchbot.Viewers.Viewers;
@@ -12,20 +14,28 @@ import twitchbot.Viewers.Viewers;
 public class DefaultCommands extends BotModule {
 
     public DefaultCommands(TwitchBot bot) {
-        super(bot, PriorityLevel.NORMAL);
+        super(bot);
     }
 
     @Override
     public Map<String, ChatFunction> getModuleCommands() {
         Map<String, ChatFunction> cmds = new HashMap<>();
         cmds.put("!uptime", new ChatFunction(Permission.NORMAL, true) {
-            // TODO: Remake using the twitch api
             @Override
             public void function(String channel, String sender, String login, String hostname, String message) {
-                long elapsedTime = System.nanoTime() - bot.getConnectedTimestamp();
-                final long hr = TimeUnit.NANOSECONDS.toHours(elapsedTime);
-                final long min = TimeUnit.NANOSECONDS.toMinutes(elapsedTime);
-                bot.botMessage("I've been up for " + String.format("%02d hours, %02d minutes", hr, min) + ".");
+                try {
+                    Date uptime = TwitchAPI.getUptime(channel.substring(1));
+                    if(uptime == null){
+                        bot.botMessage("The channel is offline.");
+                        return;
+                    }
+                    long elapsedTime = System.currentTimeMillis() - uptime.getTime();
+                    final long hr = TimeUnit.MILLISECONDS.toHours(elapsedTime);
+                    final long min = TimeUnit.MILLISECONDS.toMinutes(elapsedTime);
+                    bot.botMessage("The channel has been live for " + String.format("%02d hours and %02d minutes", hr, min) + ".");
+                } catch (IOException ex) {
+                    bot.botMessage("Couldn't retrieve uptime. Try again later.");
+                }
             }
 
         });

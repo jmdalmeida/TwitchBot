@@ -80,13 +80,17 @@ public class TwitchAPI {
 
     public static Date getUptime(String channel) throws IOException {
         Date uptime = null;
-        String jsonStr = readJsonFromUrl("https://api.twitch.tv/kraken/streams/" + channel);
+        String client_id = Configuration.getInstance().getProperty("client_id");
+        String jsonStr = readJsonFromUrl("https://api.twitch.tv/kraken/streams/" + channel + "?client_id=" + client_id);
         try {
             Object obj = PARSER.parse(jsonStr);
             JSONObject jsonObj = (JSONObject) obj;
-            String date = (String) ((JSONObject) jsonObj.get("stream")).get("created_at");
-            DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
-            uptime = utcFormat.parse(date);
+            JSONObject streamObj = (JSONObject) jsonObj.get("stream");
+            if (streamObj != null) {
+                String date = (String) streamObj.get("created_at");
+                DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
+                uptime = utcFormat.parse(date);
+            }
         } catch (ParseException | java.text.ParseException ex) {
             Logger.getLogger(TwitchAPI.class.getName()).log(Level.SEVERE, null, ex);
         }

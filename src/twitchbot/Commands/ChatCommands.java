@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import twitchbot.Modules.BotModule;
-import twitchbot.Modules.PriorityLevel;
 import twitchbot.TwitchBot;
 import twitchbot.Viewers.Permission;
 import twitchbot.Viewers.Viewer;
@@ -19,8 +18,8 @@ import twitchbot.Viewers.Viewers;
 
 public class ChatCommands extends BotModule {
 
-    public static String normalizeMessage(String msg) {
-        return msg.trim();
+    public static String normalize(String s) {
+        return s.trim();
     }
 
     public static String extractMessage(String[] exclude, String msg) {
@@ -45,7 +44,7 @@ public class ChatCommands extends BotModule {
     private Map<String, ChatFunction> customCommands;
 
     public ChatCommands(TwitchBot bot) {
-        super(bot, PriorityLevel.NORMAL);
+        super(bot);
     }
 
     public void setupCommands(Object[] modules) {

@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 import twitchbot.Commands.ChatFunction;
 import twitchbot.Config.Configuration;
 import twitchbot.Modules.BotModule;
-import twitchbot.Modules.PriorityLevel;
 import twitchbot.TwitchBot;
 import twitchbot.Viewers.Permission;
 
@@ -28,7 +27,7 @@ public class TextFilter extends BotModule {
     private int maxLen;
 
     public TextFilter(TwitchBot bot) {
-        super(bot, PriorityLevel.MAJOR);
+        super(bot);
         setup();
     }
 

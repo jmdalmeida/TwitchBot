@@ -6,7 +6,7 @@ import org.jibble.pircbot.User;
 import twitchbot.Commands.ChatCommands;
 import twitchbot.Commands.DefaultCommands;
 import twitchbot.Modules.Clock.Clock;
-import twitchbot.Modules.CycleMessages.CycleMessages;
+import twitchbot.Modules.TimedMessages.TimedMessages;
 import twitchbot.Modules.QuestionsAndAnswers.QuestionsAndAnswers;
 import twitchbot.Modules.TextFilter.TextFilter;
 import twitchbot.Modules.Topic.Topic;
@@ -26,7 +26,7 @@ public class ModuleManager {
         modules.put("Topic", new Topic(bot));
         modules.put("Clock", new Clock(bot));
         modules.put("QuestionsAndAnswers", new QuestionsAndAnswers(bot));
-        modules.put("CycleMessages", new CycleMessages(bot));
+        modules.put("TimedMessages", new TimedMessages(bot));
     }
 
     public BotModule getModule(String key) {
@@ -38,7 +38,7 @@ public class ModuleManager {
     }
 
     public void broadcastOnMessage(String channel, String sender, String login, String hostname, String message) {
-        String normalizedMsg = ChatCommands.normalizeMessage(message);
+        String normalizedMsg = ChatCommands.normalize(message);
         modules.values().stream().forEach((m) -> {
             m.onMessage(channel, sender, login, hostname, normalizedMsg);
         });

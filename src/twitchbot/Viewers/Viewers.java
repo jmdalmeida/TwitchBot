@@ -9,7 +9,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import twitchbot.Config.Configuration;
 import twitchbot.Modules.BotModule;
-import twitchbot.Modules.PriorityLevel;
 import twitchbot.TwitchAPI;
 import twitchbot.TwitchBot;
 
@@ -18,7 +17,7 @@ public class Viewers extends BotModule {
     private Map<String, Viewer> viewers;
 
     public Viewers(TwitchBot bot) {
-        super(bot, PriorityLevel.NORMAL);
+        super(bot);
         setupViewers();
     }
 
@@ -27,7 +26,8 @@ public class Viewers extends BotModule {
         try {
             Viewer[] currentViewers = TwitchAPI.getViewers(bot.getChannel());
             for (Viewer v : currentViewers) {
-                viewers.put(v.getUsername(), v);
+                viewers.put(v.getUsername().toLowerCase(), v);
+                System.out.println("Viewers list (api): Adding " + v.toString() + ".");
             }
         } catch (IOException ex) {
             Logger.getLogger(Viewers.class.getName()).log(Level.SEVERE, null, ex);
@@ -35,19 +35,19 @@ public class Viewers extends BotModule {
     }
 
     public boolean exists(String username) {
-        return viewers.containsKey(username);
+        return viewers.containsKey(username.toLowerCase());
     }
 
     public void setPermission(String username, Permission p) {
-        viewers.get(username).setPermissionLevel(p);
+        viewers.get(username.toLowerCase()).setPermissionLevel(p);
     }
 
     public Viewer getViewer(String username) {
-        return viewers.get(username);
+        return viewers.get(username.toLowerCase());
     }
 
     public void addNewViewer(String username) {
-        if (viewers.containsKey(username)) {
+        if (exists(username)) {
             return;
         }
         Permission p = username.equalsIgnoreCase(Configuration.getInstance().getProperty("broadcaster")) ? Permission.BROADCASTER : Permission.NORMAL;
