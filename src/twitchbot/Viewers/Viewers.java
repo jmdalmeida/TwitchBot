@@ -26,8 +26,11 @@ public class Viewers extends BotModule {
         try {
             Viewer[] currentViewers = TwitchAPI.getViewers(bot.getChannel());
             for (Viewer v : currentViewers) {
+                if (v.getUsername().equalsIgnoreCase(Configuration.getInstance().getProperty("broadcaster"))) {
+                    v.setPermissionLevel(Permission.BROADCASTER);
+                }
                 viewers.put(v.getUsername().toLowerCase(), v);
-                System.out.println("Viewers list (api): Adding " + v.toString() + ".");
+                System.out.println("API - Viewers list: Adding " + v.toString() + ".");
             }
         } catch (IOException ex) {
             Logger.getLogger(Viewers.class.getName()).log(Level.SEVERE, null, ex);
